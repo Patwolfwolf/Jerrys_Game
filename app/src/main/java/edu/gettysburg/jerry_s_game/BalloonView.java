@@ -1,6 +1,5 @@
 package edu.gettysburg.jerry_s_game;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
@@ -8,36 +7,23 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.os.Handler;
 import android.util.AttributeSet;
 import android.util.Log;
-import android.view.Display;
-import android.view.MotionEvent;
 import android.view.View;
-import android.view.WindowManager;
-import android.view.animation.TranslateAnimation;
-import android.widget.ImageView;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
 
-/**
- * Created by parker on 11/28/17.
- */
-
 public class BalloonView extends View {
-
-    private int width;
-    private int height;
-
-    private HashMap<Rect, Integer> balloons = new HashMap<Rect, Integer>();
-    private ArrayList<ImageView> balloonSelector = new ArrayList<ImageView>();
+    private ArrayList<Rect> rects = new ArrayList<>();
+    private ArrayList<Rect> ranRect = new ArrayList<>();
+    private int[] colors = new int[1000];
 
     private Handler handler = new Handler();
     private Timer timer = new Timer();
@@ -53,17 +39,18 @@ public class BalloonView extends View {
     int balloonHeight;
     int balloonWidth;
 
+    Canvas canvas;
     Rect srcRect;
-    Rect destRect;
+    Random rand = new Random();
 
     //black, purple, blue, green, yellow, orange, red
     public static final Integer[] imageResIds = new Integer[]{0, R.drawable.black,
-            R.drawable.purple,R.drawable.blue,R.drawable.green, R.drawable.yellow,
-            R.drawable.orange,R.drawable.red, R.drawable.death};
+            R.drawable.purple, R.drawable.blue, R.drawable.green, R.drawable.yellow,
+            R.drawable.orange, R.drawable.red, R.drawable.death};
 
     Resources res = null;
 
-    static{
+    static {
         whitePaint.setColor(Color.WHITE);
         whitePaint.setStyle(Paint.Style.FILL);
     }
@@ -74,116 +61,97 @@ public class BalloonView extends View {
         init();
     }
 
-    private void init(){
+    private void init() {
         isGameOver = false;
 
+        int width = 1080;
+        int height = 1200;
+        Log.i("width", "" + width);
+        Log.i("height", "" + height);
 
-
-        for (int i = 1; i < imageResIds.length; i++){
+        for (int i = 1; i < imageResIds.length; i++) {
             balloonsDrawable[i] = res.getDrawable(imageResIds[i]);
             bitmaps[i] = BitmapFactory.decodeResource(res, imageResIds[i]);
         }
 
-
-         balloonHeight = (bitmaps[1].getHeight() - 1) / 3;
+        balloonHeight = (bitmaps[1].getHeight() - 1) / 3;
         balloonWidth = (bitmaps[1].getWidth() - 1) / 3;
 
+        //make n random balloons with random rectangles
 
+        HashSet<Integer> pos = new HashSet<>();
+
+        for (int i = 0; i < 500; i++) {
+            int left = rand.nextInt(width - balloonWidth);
+            if (!pos.contains(left)) {
+                Rect dRect = new Rect(left, height, left + balloonWidth, height + balloonHeight);
+                rects.add(dRect);
+                pos.add(left);
+            }
+        }
         srcRect = new Rect(0, 0, bitmaps[1].getWidth() - 1, bitmaps[1].getHeight() - 1);
-        destRect = new Rect(0, 0, balloonWidth, balloonHeight);
+        generateNew();
+    }
+
+    private void generateNew() {
+        System.out.println("456789132456789456123456");
+        int total = 0;
+        int limit = 100;
+        int lineNum = 0;
+        while (total < limit) {
+            int perline = rand.nextInt(5) + 1;
+            if (total + perline > limit) perline = limit - total;
+//            ArrayList<Rect> line = new ArrayList<>();
+            for (int i = 0; i < perline; i++) {
+                Rect ran = rects.get(rand.nextInt(rects.size() - 1));
+//                boolean iterate = true;
+//                while (iterate) {
+//                    iterate = false;
+//                    for (Rect r : line) {
+//                        if (r.right > ran.left || r.left < ran.right) {
+//                            ran = rects.get(rand.nextInt(rects.size() - 1));
+//                            iterate = true;
+//                        }
+//                    }
+//                }
+                colors[total + i] = rand.nextInt(8) + 1;
+                int deviate = (balloonHeight) * lineNum + rand.nextInt(200);
+                ran.set(ran.left, ran.top + deviate, ran.right, ran.bottom + deviate);
+                ranRect.add(ran);
+            }
+            total += perline;
+            lineNum++;
+        }
     }
 
     @Override
-    protected void onDraw(Canvas canvas){
+    protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
+        canvas.drawRect(0, 0, getWidth(), getHeight(), whitePaint);
 
-        int width = getWidth();
-        int height = getHeight();
-
-        canvas.drawRect(0,0,width,height,whitePaint);
-
-        //make n random balloons with random rectangles
-        for (int i = 0; i < 20; i++) {
-            Random rand = new Random();
-            int a = rand.nextInt(8) + 1;
-            int left = rand.nextInt(width - balloonWidth);
-            int top = rand.nextInt(height - balloonHeight);
-
-            Rect dRect = new Rect(left, top, left + balloonWidth, top + balloonHeight);
-
-            canvas.drawBitmap(bitmaps[a], srcRect, dRect, paint);
+        this.canvas = canvas;
+        for (int i = 0; i < ranRect.size(); i++) {
+            System.out.println(ranRect.get(i));
+            this.canvas.drawBitmap(bitmaps[colors[i]], srcRect, ranRect.get(i), paint);
         }
 
-
-
-        canvas.drawBitmap(bitmaps[2],srcRect, destRect,paint);
-
-
-
-        /*timer.schedule(new TimerTask() {
+        timer.scheduleAtFixedRate(new TimerTask() {
             public void run() {
                 handler.post(new Runnable() {
                     @Override
                     public void run() {
                         changePos();
+                        invalidate();
                     }
                 });
             }
-        }, 0, 20);
-
-        timer.schedule(new TimerTask() {
-            public void run() {
-                handler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        addBalloons();
-                    }
-                });
-            }
-        }, 0, 1000);*/
-
-        // makeBalloonsClickable();
+        }, 50, Integer.MAX_VALUE);
     }
 
-    /*public void addBalloons(){
-        Random rand = new Random();
-        int n = rand.nextInt(balloonSelector.size());
-        ImageView balloon = balloonSelector.get(n);
-        balloons.add(balloon);
-    }*/
-
-    /*public void changePos(){
-
-        for(int i = 0; i < balloons.size();i++){
-
-            ImageView balloon = balloons.get(i);
-            balloon.setY(balloon.getY()-10);
-
-            float balloon1x = balloon.getX();
-
-            if (balloon.getY() + balloon.getHeight() < 0){
-                balloons.remove(balloon);
-            }
-        }
-    }*/
-
-    /*public void makeBalloonsClickable() {
-
-        for (ImageView balloon : balloons) {
-
-            balloon.setOnTouchListener(new View.OnTouchListener() {
-                @Override
-                public boolean onTouch(View view, MotionEvent motionEvent) {
-                    Log.i("touched", "balloon touched");
-                    //     balloon.setVisibility(View.INVISIBLE);
-                    balloonTouched(view);
-                    return false;
-                }
-            });
+    public void changePos() {
+        Log.i("changpos", "change");
+        for (int i = 0; i < ranRect.size(); i++) {
+            ranRect.get(i).set(ranRect.get(i).left, ranRect.get(i).top - 5, ranRect.get(i).right, ranRect.get(i).bottom - 5);
         }
     }
-
-    public void balloonTouched(View view) {
-        view.setVisibility(View.INVISIBLE);
-    }*/
 }
