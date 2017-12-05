@@ -34,8 +34,7 @@ public class BalloonView extends View {
     public final Drawable[] balloonsDrawable = new Drawable[9];
     public final Bitmap[] bitmaps = new Bitmap[9];
 
-    int balloonHeight;
-    int balloonWidth;
+    int balloonHeight, balloonWidth, totalLine = 0;
 
     Canvas canvas;
     Rect srcRect;
@@ -83,23 +82,26 @@ public class BalloonView extends View {
         System.out.println("456789132456789456123456");
         int total = 0;
         int limit = 2000;
-        int lineNum = 0;
         while (total < limit) {
-            int per_line = rand.nextInt(4) + 1;
+            int per_line = rand.nextInt(4) + 2;
             if (total + per_line > limit) per_line = limit - total;
             int[] colorsBall = new int[per_line];
+            int length = width - balloonWidth * per_line;
             for (int i = 0; i < per_line; i++) {
-                colorsBall[i] = rand.nextInt((width - balloonWidth * i) / per_line) + balloonWidth * i;
+                int ranLeft = rand.nextInt(length);
+                if (i > 0) colorsBall[i] = ranLeft + colorsBall[i - 1] + balloonWidth * i;
+                else colorsBall[i] = ranLeft;
+                length -= ranLeft;
             }
             for (int i = 0; i < per_line; i++) {
-                int deviateHeight = balloonHeight * lineNum + rand.nextInt(balloonHeight * 2);
+                int deviateHeight = balloonHeight * totalLine + rand.nextInt(balloonHeight * 2);
                 Rect ran = new Rect(colorsBall[i], height + deviateHeight,
                         colorsBall[i] + balloonWidth, height + balloonHeight + deviateHeight);
                 colors[total + i] = rand.nextInt(8) + 1;
                 ranRect.add(ran);
             }
             total += per_line;
-            lineNum++;
+            totalLine++;
         }
     }
 
@@ -124,13 +126,17 @@ public class BalloonView extends View {
                     }
                 });
             }
-        }, 10, Integer.MAX_VALUE);
+        }, 5, Integer.MAX_VALUE);
     }
 
     public void changePos() {
         Log.i("changpos", "change");
         for (int i = 0; i < ranRect.size(); i++) {
-            ranRect.get(i).set(ranRect.get(i).left, ranRect.get(i).top - 5, ranRect.get(i).right, ranRect.get(i).bottom - 5);
+            if (ranRect.get(i).bottom < 0)
+                ranRect.get(i).set(ranRect.get(i).left, ranRect.get(i).top + totalLine * balloonHeight,
+                        ranRect.get(i).right, ranRect.get(i).bottom + totalLine * balloonHeight);
+            else
+                ranRect.get(i).set(ranRect.get(i).left, ranRect.get(i).top - 5, ranRect.get(i).right, ranRect.get(i).bottom - 5);
         }
     }
 }
