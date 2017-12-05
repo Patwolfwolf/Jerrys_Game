@@ -15,15 +15,13 @@ import android.util.Log;
 import android.view.View;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
 
 public class BalloonView extends View {
-    private ArrayList<Rect> rects = new ArrayList<>();
     private ArrayList<Rect> ranRect = new ArrayList<>();
-    private int[] colors = new int[1000];
+    private int[] colors = new int[999999];
 
     private Handler handler = new Handler();
     private Timer timer = new Timer();
@@ -77,48 +75,30 @@ public class BalloonView extends View {
         balloonHeight = (bitmaps[1].getHeight() - 1) / 3;
         balloonWidth = (bitmaps[1].getWidth() - 1) / 3;
 
-        //make n random balloons with random rectangles
-
-        HashSet<Integer> pos = new HashSet<>();
-
-        for (int i = 0; i < 500; i++) {
-            int left = rand.nextInt(width - balloonWidth);
-            if (!pos.contains(left)) {
-                Rect dRect = new Rect(left, height, left + balloonWidth, height + balloonHeight);
-                rects.add(dRect);
-                pos.add(left);
-            }
-        }
         srcRect = new Rect(0, 0, bitmaps[1].getWidth() - 1, bitmaps[1].getHeight() - 1);
-        generateNew();
+        generateNew(width, height);
     }
 
-    private void generateNew() {
+    private void generateNew(int width, int height) {
         System.out.println("456789132456789456123456");
         int total = 0;
-        int limit = 200;
+        int limit = 2000;
         int lineNum = 0;
         while (total < limit) {
-            int perline = rand.nextInt(5) + 1;
-            if (total + perline > limit) perline = limit - total;
-            for (int i = 0; i < perline; i++) {
-                Rect ran = rects.get(rand.nextInt(rects.size() - 1));
-//                boolean iterate = true;
-//                while (iterate) {
-//                    iterate = false;
-//                    for (Rect r : line) {
-//                        if (r.right > ran.left || r.left < ran.right) {
-//                            ran = rects.get(rand.nextInt(rects.size() - 1));
-//                            iterate = true;
-//                        }
-//                    }
-//                }
+            int per_line = rand.nextInt(4) + 1;
+            if (total + per_line > limit) per_line = limit - total;
+            int[] colorsBall = new int[per_line];
+            for (int i = 0; i < per_line; i++) {
+                colorsBall[i] = rand.nextInt((width - balloonWidth * i) / per_line) + balloonWidth * i;
+            }
+            for (int i = 0; i < per_line; i++) {
+                int deviateHeight = balloonHeight * lineNum + rand.nextInt(balloonHeight * 2);
+                Rect ran = new Rect(colorsBall[i], height + deviateHeight,
+                        colorsBall[i] + balloonWidth, height + balloonHeight + deviateHeight);
                 colors[total + i] = rand.nextInt(8) + 1;
-                int deviate = (balloonHeight) * lineNum + rand.nextInt(200);
-                ran.set(ran.left, ran.top + deviate, ran.right, ran.bottom + deviate);
                 ranRect.add(ran);
             }
-            total += perline;
+            total += per_line;
             lineNum++;
         }
     }
@@ -144,7 +124,7 @@ public class BalloonView extends View {
                     }
                 });
             }
-        }, 50, Integer.MAX_VALUE);
+        }, 10, Integer.MAX_VALUE);
     }
 
     public void changePos() {
