@@ -96,12 +96,11 @@ public class BalloonView extends View {
     private void generateNew() {
         System.out.println("456789132456789456123456");
         int total = 0;
-        int limit = 100;
+        int limit = 200;
         int lineNum = 0;
         while (total < limit) {
             int perline = rand.nextInt(5) + 1;
             if (total + perline > limit) perline = limit - total;
-//            ArrayList<Rect> line = new ArrayList<>();
             for (int i = 0; i < perline; i++) {
                 Rect ran = rects.get(rand.nextInt(rects.size() - 1));
 //                boolean iterate = true;
